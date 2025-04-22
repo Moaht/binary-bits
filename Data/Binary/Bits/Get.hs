@@ -342,9 +342,11 @@ newtype BitGet a = B { runState :: S -> Get (S,a) }
 
 instance Monad BitGet where
   return x = B $ \s -> return (s,x)
-  fail str = B $ \(S inp n) -> putBackState inp n >> fail str
   (B f) >>= g = B $ \s -> do (s',a) <- f s
                              runState (g a) s'
+
+instance MonadFail BitGet where
+  fail str = B $ \(S inp n) -> putBackState inp n >> fail str
 
 instance Functor BitGet where
   fmap f m = m >>= \a -> return (f a)
@@ -467,13 +469,13 @@ shiftl_w32 :: Word32 -> Int -> Word32
 shiftl_w64 :: Word64 -> Int -> Word64
 
 #if defined(__GLASGOW_HASKELL__) && !defined(__HADDOCK__)
-shiftl_w8  (W8#  w) (I# i) = W8# (w `uncheckedShiftL#`   i)
-shiftl_w16 (W16# w) (I# i) = W16# (w `uncheckedShiftL#`   i)
-shiftl_w32 (W32# w) (I# i) = W32# (w `uncheckedShiftL#`   i)
+shiftl_w8  (W8#  w) (I# i) = W8# (wordToWord8# (word8ToWord# w `uncheckedShiftL#` i))
+shiftl_w16 (W16# w) (I# i) = W16# (wordToWord16# (word16ToWord# w `uncheckedShiftL#` i))
+shiftl_w32 (W32# w) (I# i) = W32# (wordToWord32# (word32ToWord# w `uncheckedShiftL#` i))
 
-shiftr_w8  (W8#  w) (I# i) = W8# (w `uncheckedShiftRL#`   i)
-shiftr_w16 (W16# w) (I# i) = W16# (w `uncheckedShiftRL#`  i)
-shiftr_w32 (W32# w) (I# i) = W32# (w `uncheckedShiftRL#`  i)
+shiftr_w8  (W8#  w) (I# i) = W8# (wordToWord8# (word8ToWord# w `uncheckedShiftRL#` i))
+shiftr_w16 (W16# w) (I# i) = W16# (wordToWord16# (word16ToWord# w `uncheckedShiftRL#` i))
+shiftr_w32 (W32# w) (I# i) = W32# (wordToWord32# (word32ToWord# w `uncheckedShiftRL#` i))
 
 
 #if WORD_SIZE_IN_BITS < 64
